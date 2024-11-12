@@ -9,6 +9,7 @@ Date: 2024/11/11
 
 import numpy as np
 import math
+import time
 
 from typing import List, Union, Tuple, Any
 
@@ -62,6 +63,33 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
         
     return new_array
 
+def agg_duplicates(arr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Finds duplicated columns in the input array, adds them,
+    and returns the same input array without the duplicated 
+    columns and another array with the total count of each aggregated column.
+
+    Args:
+        arr (np.ndarray): the input array, with the value combinations that needs to be examined arranged in columns.
+
+    Returns:
+        np.ndarray: the input array without duplicated columns
+        np.ndarray: the total count of each aggregated column.
+    """
+    
+    data = np.ones_like(arr[0,:])
+    arr2 = arr.T
+    
+    order = np.lexsort(arr2.T)
+    diff = np.diff(arr2[order], axis=0)
+    uniq_mask = np.append(True, (diff != 0).any(axis=1))
+
+    uniq_inds = order[uniq_mask]
+    inv_idx = np.zeros_like(order)
+    inv_idx[order] = np.cumsum(uniq_mask) - 1
+    
+    data = np.bincount(inv_idx, weights=data)
+    
+    return arr2[uniq_inds].T, data
 
 def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radian_angles: List[float], levels: int, sum_angles: bool=False) -> np.ndarray:
     """ Cross-image co-occurrence matrix (CICM), a version of the gray-level co-ocurrence matrix (GLCM) 
@@ -84,21 +112,24 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
                     in dst_img.
     """
     
-    cicm_array = np.zeros((levels, levels, len(distances), len(radian_angles)), dtype = np.uint8)
+    cicm_array = np.zeros((levels, levels, len(distances), len(radian_angles)))
+    
+    rows, cols = src_img.shape[:2]
     
     for idx_d, D in enumerate(distances):
+        
         for idx_a, A in enumerate(radian_angles):
             
             src = src_img
             
             # For consistency with the results from scikit's graycomatrix method,
-            # here we transpose the angles 180 degrees anti-clockwise, so that
+            # here we transpose the angles 180 degrees counter-clockwise, so that
             # 0 degrees moves straight backwards on the horizontal, 
             # 45 moves backwards up on the diagonal, 
             # 90 moves straight upwards on the vertical,
             # and 135 moves forward up on the diagonal.
             
-            corrected_angle = math.radians(180)-A
+            corrected_angle = math.radians(180) - A
             
             step_row = math.ceil(D * round(math.sin(-corrected_angle)))
             step_col = math.ceil(D * round(math.cos(corrected_angle)))
@@ -106,33 +137,33 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
             # Define dst as the input image after shifting
             # each pixel D positions in the direction of angle A.
             dst = shift_array(dst_image, (-step_row, -step_col), padding=-1)
+                                    
+            # Ravel matrices to simplify calculations
+            src_rav = src.ravel()
+            dst_rav = dst.ravel()
+                        
+            # Define mask to ignore negative entries, 
+            # as they are used for padding during
+            # shifting, and should not be confused with
+            # numpy's negative indexing.
+            mask = (dst_rav >= 0) 
             
-            # Loop over each gray-level value
-            for l1 in range(levels):
-                
-                # Define a logical array where True indicates
-                # that a pixel contains gray level l1 in src, 
-                # and False indicates that it doesn't.
-                src_bin = (src==l1)
-                
-                for l2 in range(levels):
-                    # Define a logical array where True indicates
-                    # that a pixel contains gray level l2 in dst, 
-                    # and False indicates that it doesn't.
-                    dst_bin = (dst==l2)
-                    
-                    # Define a new logical array where True indicates
-                    # that a cell is True in both src_bin and dst_bin,
-                    # whereas False indicates that the cell is not True
-                    # in at least one of the arrays.
-                    matches = src_bin & dst_bin
-                    
-                    # Get total number of matching (True) pixels.
-                    count = matches.sum()
-                    
-                    # Add the number of matching pixels to the array
-                    # for the current distance and angle.
-                    cicm_array[l2,l1,idx_d,idx_a] += count
+            # Convert arrays to indices
+            rows = src_rav[mask].T
+            cols = dst_rav[mask].T
+            
+            # Stack indices to operate on 
+            # one single array
+            data = np.stack((rows, cols))
+            
+            # Find repeated row-column combinations
+            # and add one
+            agg_data, counts = agg_duplicates(data)
+            rows, cols = agg_data
+            
+            # Add the number of matching pixels to the array
+            # for the current distance and angle.
+            cicm_array[rows, cols, idx_d, idx_a] += counts
     
     if (sum_angles):
         # Sum all the angles for each distance
@@ -140,4 +171,3 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
         cicm_array = np.sum(cicm_array, axis=3)
       
     return cicm_array
-
