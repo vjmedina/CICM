@@ -176,7 +176,7 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
             
             # Add the number of matching pixels to the array
             # for the current distance and angle.
-            cicm_array[rows, cols, idx_d, idx_a] += counts
+            cicm_array[rows, cols, idx_d, idx_a] += counts.astype(cicm_array.dtype)
     
     if (sum_angles):
         # Sum all the angles for each distance
