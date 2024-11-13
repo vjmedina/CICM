@@ -113,9 +113,7 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
     """
     
     cicm_array = np.zeros((levels, levels, len(distances), len(radian_angles)))
-    
-    rows, cols = src_img.shape[:2]
-    
+        
     for idx_d, D in enumerate(distances):
         
         for idx_a, A in enumerate(radian_angles):
