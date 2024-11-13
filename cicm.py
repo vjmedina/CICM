@@ -149,6 +149,13 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
             # numpy's negative indexing.
             mask = (dst_rav >= 0) 
             
+            # If every element in the mask is False
+            # it means there aren't any co-occurrence
+            # between the matrices, and so it makes no
+            # sense in continuing processing this loop.
+            if (np.all(mask == False)):
+                continue
+            
             # Convert arrays to indices
             rows = src_rav[mask].T
             cols = dst_rav[mask].T
