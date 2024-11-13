@@ -157,7 +157,12 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
             # Find repeated row-column combinations
             # and add one
             agg_data, counts = agg_duplicates(data)
-            rows, cols = agg_data
+            
+            # Reverse rows and columns to be consistent
+            # with the arrangement returned by 
+            # scikit's graycomatrix and other similar 
+            # methods.
+            cols, rows = agg_data
             
             # Add the number of matching pixels to the array
             # for the current distance and angle.
