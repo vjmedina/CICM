@@ -104,7 +104,10 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray = None, distances: List[int]
     if (dst_image is None):
         dst_image = src_img
     
-    cicm_array = np.zeros((levels, levels, len(distances), len(angles)), dtype=np.uint32, order='C')    
+    distances = np.ascontiguousarray(distances, dtype=np.float16)
+    angles = np.ascontiguousarray(angles, dtype=np.float16)
+    
+    cicm_array = np.zeros((levels, levels, len(distances), len(angles)), dtype=np.uint8, order='C')    
             
     for idx_d, D in enumerate(distances):
         
