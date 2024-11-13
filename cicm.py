@@ -91,7 +91,7 @@ def agg_duplicates(arr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     
     return arr2[uniq_inds].T, data
 
-def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radian_angles: List[float], levels: int, sum_angles: bool=False) -> np.ndarray:
+def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], angles: List[float], levels: int, sum_angles: bool=False) -> np.ndarray:
     """ Cross-image co-occurrence matrix (CICM), a version of the gray-level co-ocurrence matrix (GLCM) 
     that allows finding pixel co-occurrences between different images, or channels of the same image.
 
@@ -99,7 +99,7 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
         src_img (np.ndarray): The reference image.
         dst_image (np.ndarray): The destination image to check for pixel co-occurrence.
         distances (List[int]): The list of pixel distances to consider.
-        radian_angles (List[float]): The list of pixel angles to consider, given in radians.
+        angles (List[float]): The list of pixel angles to consider, given in radians.
         levels (int): The total number of gray level values that can occur in the image.
         sum_angles (bool, optional): When set to True, the result component for each distance combines the sum of all the pixel counts 
                                      for each angle into one array; If set to False, the counts for each individual angle are kept in 
@@ -113,13 +113,13 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], radia
     """
     
     distances = np.ascontiguousarray(distances, dtype=np.float64)
-    radian_angles = np.ascontiguousarray(radian_angles, dtype=np.float64)
+    angles = np.ascontiguousarray(angles, dtype=np.float64)
     
-    cicm_array = np.zeros((levels, levels, len(distances), len(radian_angles)), dtype=np.uint32, order='C')    
+    cicm_array = np.zeros((levels, levels, len(distances), len(angles)), dtype=np.uint32, order='C')    
             
     for idx_d, D in enumerate(distances):
         
-        for idx_a, A in enumerate(radian_angles):
+        for idx_a, A in enumerate(angles):
             
             src = src_img
             
