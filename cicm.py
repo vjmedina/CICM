@@ -72,24 +72,13 @@ def agg_duplicates(arr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         arr (np.ndarray): the input array, with the value combinations that needs to be examined arranged in columns.
 
     Returns:
-        np.ndarray: the input array without duplicated columns
+        np.ndarray: the input array without duplicated columns, sorted incrementally by row, starting from the top-most row.
         np.ndarray: the total count of each aggregated column.
     """
-    
-    data = np.ones_like(arr[0,:])
-    arr2 = arr.T
-    
-    order = np.lexsort(arr2.T)
-    diff = np.diff(arr2[order], axis=0)
-    uniq_mask = np.append(True, (diff != 0).any(axis=1))
-
-    uniq_inds = order[uniq_mask]
-    inv_idx = np.zeros_like(order)
-    inv_idx[order] = np.cumsum(uniq_mask) - 1
-    
-    data = np.bincount(inv_idx, weights=data)
-    
-    return arr2[uniq_inds].T, data
+                
+    uniques, counts = np.unique(arr.T, axis=0, return_counts=True)
+                
+    return uniques.T, counts.T
 
 def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], angles: List[float], levels: int, sum_angles: bool=False) -> np.ndarray:
     """ Cross-image co-occurrence matrix (CICM), a version of the gray-level co-ocurrence matrix (GLCM) 
