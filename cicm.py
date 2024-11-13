@@ -80,16 +80,16 @@ def agg_duplicates(arr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
                 
     return uniques.T, counts.T
 
-def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], angles: List[float], levels: int, sum_angles: bool=False) -> np.ndarray:
+def cicm(src_img: np.ndarray, dst_image: np.ndarray = None, distances: List[int] = [1], angles: List[float] = [0], levels: int = 256, sum_angles: bool=False) -> np.ndarray:
     """ Cross-image co-occurrence matrix (CICM), a version of the gray-level co-ocurrence matrix (GLCM) 
     that allows finding pixel co-occurrences between different images, or channels of the same image.
 
     Args:
         src_img (np.ndarray): The reference image.
-        dst_image (np.ndarray): The destination image to check for pixel co-occurrence.
-        distances (List[int]): The list of pixel distances to consider.
-        angles (List[float]): The list of pixel angles to consider, given in radians.
-        levels (int): The total number of gray level values that can occur in the image.
+        dst_image (np.ndarray, optional): The destination image to check for pixel co-occurrence. If None, src_img is compared with itself. Defaults to None.
+        distances (List[int], optional): The list of pixel distances to consider. Defaults to [1].
+        angles (List[float], optional): The list of pixel angles to consider, given in radians. Defaults to [0].
+        levels (int, optional): The total number of gray level values that can occur in the image. Defaults to 256.
         sum_angles (bool, optional): When set to True, the result component for each distance combines the sum of all the pixel counts 
                                      for each angle into one array; If set to False, the counts for each individual angle are kept in 
                                      separate arrays. Defaults to False.
@@ -101,8 +101,8 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray, distances: List[int], angle
                     in dst_img.
     """
     
-    distances = np.ascontiguousarray(distances, dtype=np.float64)
-    angles = np.ascontiguousarray(angles, dtype=np.float64)
+    if (dst_image is None):
+        dst_image = src_img
     
     cicm_array = np.zeros((levels, levels, len(distances), len(angles)), dtype=np.uint32, order='C')    
             
