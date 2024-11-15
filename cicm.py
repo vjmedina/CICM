@@ -7,6 +7,7 @@ Author: Victor Medina-Heierle
 Date: 2024/11/11
 """
 
+from collections import Counter
 import numpy as np
 import math
 import time
@@ -63,22 +64,70 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
         
     return new_array
 
-def agg_duplicates(arr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def agg_duplicates(arr:np.ndarray, method:int=1) -> Tuple[np.ndarray, np.ndarray]:
     """Finds duplicated columns in the input array, adds them,
     and returns the same input array without the duplicated 
     columns and another array with the total count of each aggregated column.
 
     Args:
         arr (np.ndarray): the input array, with the value combinations that needs to be examined arranged in columns.
+        method (int, default): Method used to count and remove duplicates in the input array. Available methods are:
+                                1. Method proposed by user HansBrende (https://github.com/HansBrende) in a numpy 
+                                issue (https://github.com/numpy/numpy/issues/11136#issuecomment-2403086713) regarding 
+                                the speed of method numpy.unique. Some limitations of this method are that "the running 
+                                product of the total number of unique values in each column must be less than 65536" and
+                                that "it will only work for integer types". However, it is much faster than any of the
+                                other two methods. (Default)
+                                2. Method using numpy.unique (second fastest method)
+                                3. Method using tuples and collections.Counter. (Slowest method) 
+                                
 
     Returns:
         np.ndarray: the input array without duplicated columns, sorted incrementally by row, starting from the top-most row.
         np.ndarray: the total count of each aggregated column.
     """
-                
-    uniques, counts = np.unique(arr.T, axis=0, return_counts=True)
-                
-    return uniques.T, counts.T
+    
+    arr2 = arr.T
+       
+    if (method == 1):
+        """
+        This method was proposed by user HansBrende (https://github.com/HansBrende) on Oct. 9th, 2024
+        in a numpy issue (https://github.com/numpy/numpy/issues/11136#issuecomment-2403086713) regarding 
+        the speed of numpy's method unique.
+        """ 
+        next_shift = 0
+        result = np.zeros(shape=(1,), dtype=np.uint16)
+        col_data = []
+        for col in np.transpose(arr2):
+            col_lookup = np.nonzero(np.bincount(col))[0]
+            col_nbits = math.ceil(math.log2(len(col_lookup)))
+            col_data.append((col_nbits, col.dtype, col_lookup))
+            if col_nbits:
+                result = (np.searchsorted(col_lookup, col) << next_shift).astype(np.uint16) | result
+                next_shift += col_nbits
+                if next_shift > 16:
+                    raise NotImplementedError
+        counts = np.bincount(result)
+        values_set = np.nonzero(counts)[0]
+        final_counts = counts[values_set]
+        restored_cols = []
+        for col_nbits, col_dtype, col_lookup in col_data:
+            restored_cols.append(col_lookup[values_set & ((1 << col_nbits) - 1)].astype(col_dtype))
+            values_set >>= col_nbits
+        return restored_cols, final_counts
+    
+    elif (method == 2):    
+        uniques, counts = np.unique(arr2, axis=0, return_counts=True)
+        return uniques.T, counts
+
+    elif (method == 3):            
+        arr3 = tuple(map(tuple, arr2))
+        c = Counter(arr3)
+        
+        return np.array(list(c.keys())).T, np.array(list(c.values()))
+    else:
+        raise ValueError("Wrong method")
+    
 
 def cicm(src_img: np.ndarray, dst_image: np.ndarray = None, distances: List[int] = [1], angles: List[float] = [0], levels: int = 256, sum_angles: bool=False) -> np.ndarray:
     """ Cross-image co-occurrence matrix (CICM), a version of the gray-level co-ocurrence matrix (GLCM) 
@@ -156,9 +205,9 @@ def cicm(src_img: np.ndarray, dst_image: np.ndarray = None, distances: List[int]
             # one single array
             data = np.stack((rows, cols))
             
-            # Find repeated row-column combinations
-            # and add one
-            agg_data, counts = agg_duplicates(data)
+            # Count the number of each row-column combination,
+            # which correspond to each pixel pair co-occurrence.
+            agg_data, counts = agg_duplicates(data, method = 1)
             
             # Reverse rows and columns to be consistent
             # with the arrangement returned by 
