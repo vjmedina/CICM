@@ -43,7 +43,7 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
     
     # Declare an array where all cells contain
     # the padding element.
-    new_array = np.ones_like(array)*padding
+    new_array = np.ones_like(array.astype('int8'))*padding
     rows, cols = array.shape[0:2]
     
     # We cannot use 0 as a slice limit, 
