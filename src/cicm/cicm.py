@@ -22,7 +22,7 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
         array (np.ndarray): The input array.
         step (Union[int,Tuple,List]): The number of rows and columns to shift the input array, with negative values indicating backward shifting.
                                       If only an integer value is provided, the same value will be used for rows and columns.
-        padding (Any, optional): Any valid nupy array value to be used as padding after shifting the input array. Defaults to -1.
+        padding (Any, optional): Any valid numpy array value to be used as padding after shifting the input array. Defaults to -1.
 
     Returns:
         np.ndarray: The shifted and padded array.
@@ -35,7 +35,7 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
                (ignoring the value of the cval parameter) when the input array is generated randomly.
     """
      
-    if (type(step) == int):
+    if (isinstance(step, int)):
         step = (step, step)
             
     step_row = step[0]
@@ -43,7 +43,7 @@ def shift_array(array: np.ndarray, step: Union[int,Tuple,List], padding: Any = -
     
     # Declare an array where all cells contain
     # the padding element.
-    new_array = np.ones_like(array)*padding
+    new_array = np.ones_like(array.astype('int8'))*padding
     rows, cols = array.shape[0:2]
     
     # We cannot use 0 as a slice limit, 

@@ -1,15 +1,17 @@
+import os
 import math
 import numpy as np
 from PIL import Image
 
 import cicm
 
+SAMPLE_IMG_PATH=os.path.join(os.path.dirname(__file__),'..','examples')
 
 levels = 256
 distances=[1]
 angles=[0, math.radians(45), math.radians(90), math.radians(135)]
         
-img = Image.open("peppers.png")
+img = Image.open(os.path.join(SAMPLE_IMG_PATH,"peppers.png"))
 
 r_channel = np.array(img)[:,:,0]
 g_channel = np.array(img)[:,:,1]
