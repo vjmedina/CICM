@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cicm"
+version = "0.1.0"
+description = "Cross-image co-occurrence matrix (CICM) implementation in Python."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{ name = "Victor Medina" }]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "scikit-image"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
